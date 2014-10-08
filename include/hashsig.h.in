@@ -1,0 +1,185 @@
+/******************************************************************************
+ * libhashsig - A hash-based digital signature library
+ *
+ * Copyright (c) 2014, Arne Bochem
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the library nor the names of its contributors may
+ *       be used to endorse or promote products derived from this software
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *****************************************************************************/
+
+#ifndef HASHSIG_H
+#define HASHSIG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
+/* Lamport, Diffie, Winternitz and Merkle One-Time Signatures and Lazy Merkle Forest Signatures */
+
+/* Based on:
+ *   http://tools.ietf.org/html/draft-mcgrew-hash-sigs-02
+ *   https://www.imperialviolet.org/2013/07/18/hashsig.html
+ */
+
+#define HASHSIG_VERSION_MAJOR @HASHSIG_VERSION_MAJOR@
+#define HASHSIG_VERSION_MINOR @HASHSIG_VERSION_MINOR@
+#define HASHSIG_VERSION_MICRO @HASHSIG_VERSION_MICRO@
+
+/* libhashsig context. Do not access the same context concurrently! Do not access fields manually! */
+struct hashsig_s;
+typedef struct hashsig_s hashsig_t;
+
+/* libhashsig public key. Do not access fields manually! Use: hashsig_pub2buf and hashsig_buf2pub. */
+struct hashsig_pub_s;
+typedef struct hashsig_pub_s hashsig_pub_t;
+
+/* libhashsig public key. Do not access fields manually! Use: hashsig_sig2buf and hashsig_buf2sig. */
+struct hashsig_sig_s;
+typedef struct hashsig_sig_s hashsig_sig_t;
+
+/* IMPORTANT: libhashsig keeps a pointer to your private key buffer. It does NOT copy it. After destroying the context, take proper care to zero your own buffer. If pub is NULL, it will be calculated while the context is created, otherwise it will be assumed that it is the public key corresponding to the private key and copied into the context. */
+hashsig_t *hashsig_create_context (const uint8_t *const priv, const size_t priv_len, const hashsig_pub_t *pub);
+hashsig_t *hashsig_create_context_type (const uint32_t type, const uint8_t *const priv, const size_t priv_len, const hashsig_pub_t *pub);
+
+/* Deallocates context. */
+void hashsig_destroy_context (hashsig_t *ctx);
+
+/* Returned value has to be freed using hashsig_free. */
+hashsig_pub_t *hashsig_get_public_key (hashsig_t *ctx);
+
+/* Returned value has to be freed using hashsig_free. */
+hashsig_sig_t *hashsig_sign (hashsig_t *ctx, const uint8_t *message, const size_t len);
+
+/* Returns zero on success, negative on unsupported signature type and positive on bad signature. */
+int hashsig_verify (const hashsig_pub_t *pub, const hashsig_sig_t *sig, const uint8_t *message, const size_t len);
+
+/* Convert between libhashsig structures and buffers. Return zero on success and required minimum buffer length on failure. */
+size_t hashsig_pub2buf (const hashsig_pub_t *pub, uint8_t *buf, const size_t len);
+size_t hashsig_sig2buf (const hashsig_sig_t *sig, uint8_t *buf, const size_t len);
+
+/* The target structure will be allocated and assigned to the pointer. It is the user's responsibility to free it using hashsig_free. */
+size_t hashsig_buf2pub (hashsig_pub_t **pub, const uint8_t *buf, const size_t len);
+size_t hashsig_buf2sig (hashsig_sig_t **sig, const uint8_t *buf, const size_t len);
+
+/* Query information about required buffer lengths. */
+size_t hashsig_private_key_length ();
+size_t hashsig_private_key_length_type (const uint32_t type);
+size_t hashsig_signature_length (const hashsig_t *ctx);
+size_t hashsig_public_key_length (const hashsig_t *ctx);
+
+/* Retrieve description of public key or signature type as a string. Return zero on success and one on failure. */
+int hashsig_signature_type (const hashsig_sig_t *sig, char *str, const size_t len);
+int hashsig_public_key_type (const hashsig_pub_t *pub, char *str, const size_t len);
+
+/* Free buffer allocated by libhashsig functions. */
+void hashsig_free (void *buf);
+
+/* Defined types of public keys and signatures: */
+#define HASHSIG_TYPE_KECCAK_T32_B8_M20_N32_W1 0x00
+#define HASHSIG_TYPE_KECCAK_T32_B8_M20_N32_W2 0x01
+#define HASHSIG_TYPE_KECCAK_T32_B8_M20_N32_W4 0x02
+#define HASHSIG_TYPE_KECCAK_T32_B8_M20_N32_W8 0x03
+#define HASHSIG_TYPE_KECCAK_T32_B8_M32_N32_W1 0x04
+#define HASHSIG_TYPE_KECCAK_T32_B8_M32_N32_W2 0x05
+#define HASHSIG_TYPE_KECCAK_T32_B8_M32_N32_W4 0x06 /* DEFAULT (Currently, this is the only supported type.) */
+#define HASHSIG_TYPE_KECCAK_T32_B8_M32_N32_W8 0x07
+#define HASHSIG_TYPE_KECCAK_T32_B8_M64_N64_W1 0x08
+#define HASHSIG_TYPE_KECCAK_T32_B8_M64_N64_W2 0x09
+#define HASHSIG_TYPE_KECCAK_T32_B8_M64_N64_W4 0x0a
+#define HASHSIG_TYPE_KECCAK_T32_B8_M64_N64_W8 0x0b
+#define HASHSIG_TYPE_KECCAK_T64_B8_M64_N64_W1 0x0c
+#define HASHSIG_TYPE_KECCAK_T64_B8_M64_N64_W2 0x0d
+#define HASHSIG_TYPE_KECCAK_T64_B8_M64_N64_W4 0x0e
+#define HASHSIG_TYPE_KECCAK_T64_B8_M64_N64_W8 0x0f
+#define HASHSIG_TYPE_KECCAK_T32_B16_M20_N32_W1 0x10
+#define HASHSIG_TYPE_KECCAK_T32_B16_M20_N32_W2 0x11
+#define HASHSIG_TYPE_KECCAK_T32_B16_M20_N32_W4 0x12
+#define HASHSIG_TYPE_KECCAK_T32_B16_M20_N32_W8 0x13
+#define HASHSIG_TYPE_KECCAK_T32_B16_M32_N32_W1 0x14
+#define HASHSIG_TYPE_KECCAK_T32_B16_M32_N32_W2 0x15
+#define HASHSIG_TYPE_KECCAK_T32_B16_M32_N32_W4 0x16
+#define HASHSIG_TYPE_KECCAK_T32_B16_M32_N32_W8 0x17
+#define HASHSIG_TYPE_KECCAK_T32_B16_M64_N64_W1 0x18
+#define HASHSIG_TYPE_KECCAK_T32_B16_M64_N64_W2 0x19
+#define HASHSIG_TYPE_KECCAK_T32_B16_M64_N64_W4 0x1a
+#define HASHSIG_TYPE_KECCAK_T32_B16_M64_N64_W8 0x1b
+#define HASHSIG_TYPE_KECCAK_T64_B16_M64_N64_W1 0x1c
+#define HASHSIG_TYPE_KECCAK_T64_B16_M64_N64_W2 0x1d
+#define HASHSIG_TYPE_KECCAK_T64_B16_M64_N64_W4 0x1e
+#define HASHSIG_TYPE_KECCAK_T64_B16_M64_N64_W8 0x1f
+#define HASHSIG_TYPE_SKEIN_T32_B8_M20_N32_W1 0x20
+#define HASHSIG_TYPE_SKEIN_T32_B8_M20_N32_W2 0x21
+#define HASHSIG_TYPE_SKEIN_T32_B8_M20_N32_W4 0x22
+#define HASHSIG_TYPE_SKEIN_T32_B8_M20_N32_W8 0x23
+#define HASHSIG_TYPE_SKEIN_T32_B8_M32_N32_W1 0x24
+#define HASHSIG_TYPE_SKEIN_T32_B8_M32_N32_W2 0x25
+#define HASHSIG_TYPE_SKEIN_T32_B8_M32_N32_W4 0x26
+#define HASHSIG_TYPE_SKEIN_T32_B8_M32_N32_W8 0x27
+#define HASHSIG_TYPE_SKEIN_T32_B8_M64_N64_W1 0x28
+#define HASHSIG_TYPE_SKEIN_T32_B8_M64_N64_W2 0x29
+#define HASHSIG_TYPE_SKEIN_T32_B8_M64_N64_W4 0x2a
+#define HASHSIG_TYPE_SKEIN_T32_B8_M64_N64_W8 0x2b
+#define HASHSIG_TYPE_SKEIN_T64_B8_M64_N64_W1 0x2c
+#define HASHSIG_TYPE_SKEIN_T64_B8_M64_N64_W2 0x2d
+#define HASHSIG_TYPE_SKEIN_T64_B8_M64_N64_W4 0x2e
+#define HASHSIG_TYPE_SKEIN_T64_B8_M64_N64_W8 0x2f
+#define HASHSIG_TYPE_SKEIN_T32_B16_M20_N32_W1 0x30
+#define HASHSIG_TYPE_SKEIN_T32_B16_M20_N32_W2 0x31
+#define HASHSIG_TYPE_SKEIN_T32_B16_M20_N32_W4 0x32
+#define HASHSIG_TYPE_SKEIN_T32_B16_M20_N32_W8 0x33
+#define HASHSIG_TYPE_SKEIN_T32_B16_M32_N32_W1 0x34
+#define HASHSIG_TYPE_SKEIN_T32_B16_M32_N32_W2 0x35
+#define HASHSIG_TYPE_SKEIN_T32_B16_M32_N32_W4 0x36
+#define HASHSIG_TYPE_SKEIN_T32_B16_M32_N32_W8 0x37
+#define HASHSIG_TYPE_SKEIN_T32_B16_M64_N64_W1 0x38
+#define HASHSIG_TYPE_SKEIN_T32_B16_M64_N64_W2 0x39
+#define HASHSIG_TYPE_SKEIN_T32_B16_M64_N64_W4 0x3a
+#define HASHSIG_TYPE_SKEIN_T32_B16_M64_N64_W8 0x3b
+#define HASHSIG_TYPE_SKEIN_T64_B16_M64_N64_W1 0x3c
+#define HASHSIG_TYPE_SKEIN_T64_B16_M64_N64_W2 0x3d
+#define HASHSIG_TYPE_SKEIN_T64_B16_M64_N64_W4 0x3e
+#define HASHSIG_TYPE_SKEIN_T64_B16_M64_N64_W8 0x3f
+
+/* T is forest height. {32, 64}
+ * B is tree height. {8, 16}
+ * M is width of the hashes in the public key/signature in bytes. {20, 32, 64}
+ * N is width of the hash function for general purposes in bytes. {32, 64}
+ * W is the Winternitz encoding level. {1, 2, 4, 8}
+ *
+ * Higher T, B, M, N, W reduce speed.
+ * Higher B, W reduce signature size.
+ * Higher T, M, N increase signature size.
+ * Higher T, B, M, N increase security.
+ *
+ * Do not mindlessly change the order or add new types, unless you want hashsig_signature_type and hashsig_public_key_type and possibly other things to break.
+ *
+ * Keccak and Skein refer to libhashsig's personalized implementations.
+ */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HASHSIG_H */

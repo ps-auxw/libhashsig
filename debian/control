@@ -1,0 +1,45 @@
+Source: libhashsig
+Priority: extra
+Maintainer: Arne Bochem <ps-auxw@ps-auxw.de>
+Build-Depends: debhelper (>= 8.0.0), cmake
+Standards-Version: 3.9.3
+Section: libs
+Homepage: https://github.com/ps-auxw/libhashsig
+
+Package: libhashsig-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}, libhashsig0.9 (= ${binary:Version})
+Description: libhashsig: Hash based digital signatures - development
+ libhashsig is a stand-alone library for the creation and verification of
+ digital signatures based on a hash based signature scheme.
+ .
+ It is implemented employing Lamport, Diffie, Winternitz, Merkle one-time
+ signatures, as described in draft-mcgrew-hash-sigs-02[1] combined with the
+ lazy Merkle forest approach described by Adam Langley[2] to allow for a
+ practically unlimited number of signatures.
+ .
+ This package contains the header files, static library and manpages used for
+ development and building applications using libhashsig.
+ .
+ [1] http://tools.ietf.org/html/draft-mcgrew-hash-sigs-02
+ [2] https://www.imperialviolet.org/2013/07/18/hashsig.html
+
+Package: libhashsig0.9
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: libhashsig: Hash based digital signatures - runtime
+ libhashsig is a stand-alone library for the creation and verification of
+ digital signatures based on a hash based signature scheme.
+ .
+ It is implemented employing Lamport, Diffie, Winternitz, Merkle one-time
+ signatures, as described in draft-mcgrew-hash-sigs-02[1] combined with the
+ lazy Merkle forest approach described by Adam Langley[2] to allow for a
+ practically unlimited number of signatures.
+ .
+ This package contains the runtime library files needed to run software
+ using libhashsig.
+ .
+ [1] http://tools.ietf.org/html/draft-mcgrew-hash-sigs-02
+ [2] https://www.imperialviolet.org/2013/07/18/hashsig.html

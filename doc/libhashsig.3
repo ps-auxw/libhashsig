@@ -1,0 +1,53 @@
+.TH LIBHASHSIG 3
+.SH NAME
+libhashsig \- overview of the libhashsig digital signature library
+.SH SYNOPSIS
+\fBhashsig_t *hashsig_create_context (const uint8_t *const \fIpriv\fB,
+                                   const size_t \fIpriv_len\fB,
+                                   const hashsig_pub_t *\fIpub\fB
+                                  );
+
+\fBvoid hashsig_destroy_context (hashsig_t *\fIctx\fB);
+
+\fBhashsig_pub_t *hashsig_get_public_key (hashsig_t *\fIctx\fB);
+
+\fBhashsig_sig_t *hashsig_sign (hashsig_t *\fIctx\fB,
+                             const uint8_t *\fImessage\fB,
+                             const size_t \fIlen\fB
+                            );
+
+\fBint hashsig_verify (const hashsig_pub_t *\fIpub\fB,
+                    const hashsig_sig_t *\fIsig\fB,
+                    const uint8_t *\fImessage\fB,
+                    const size_t \fIlen\fB
+                   );
+
+\fBsize_t hashsig_pub2buf (const hashsig_pub_t *\fIpub\fB,
+                        uint8_t *\fIbuf\fB,
+                        const size_t \fIlen\fB
+                       );
+
+\fBsize_t hashsig_sig2buf (const hashsig_sig_t *\fIsig\fB,
+                        uint8_t *\fIbuf\fB,
+                        const size_t \fIlen\fB
+                       );
+
+\fBsize_t hashsig_buf2pub (hashsig_pub_t **\fIpub\fB,
+                        const uint8_t *\fIbuf\fB,
+                        const size_t \fIlen\fB
+                       );
+
+\fBsize_t hashsig_buf2sig (hashsig_sig_t **\fIsig\fB,
+                        const uint8_t *\fIbuf\fB,
+                        const size_t \fIlen\fB
+                       );
+
+\fBsize_t hashsig_private_key_length ();
+
+\fBsize_t hashsig_signature_length (const hashsig_t *\fIctx\fB);
+
+\fBsize_t hashsig_public_key_length (const hashsig_t *\fIctx\fB);
+
+\fBvoid hashsig_free (void *\fIbuf\fB);
+.SH DESCRIPTION
+Documentation to be added. For more information, please look at hashsig.h and the source code.
